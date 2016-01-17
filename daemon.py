@@ -6,12 +6,19 @@ import signal
 import datetime
 import time
 import math
-import getopt
+import argparse
 import sys
 import os
+from enum import Enum
 
 SECONDS_IN_DAY = 86400
 
+class RunMode(Enum):
+    SCHEDULED   = 1
+    ONCE        = 2
+    DOWNLOAD    = 3
+    BACKTEST    = 4
+    REPORT      = 5
 
 
 # Configure logging
@@ -26,6 +33,20 @@ def interrupt(num, frame):
 # Hook signals
 signal.signal(signal.SIGINT, interrupt)
 signal.signal(signal.SIGTERM, interrupt)
+
+def run(mode):
+    '''Execute a single task, according to the mode'''
+    if mode in (RunMode.ONCE, RunMode.SCHEDULED, RunMode.DOWNLOAD):
+        # TODO: update task
+        pass
+    
+    if mode in (RunMode.BACKTEST):
+        # TODO: backtest task
+        pass
+
+    if mode in (RunMode.ONCE, RunMode.SCHEDULED, RunMode.REPORT):
+        # TODO: render/send report
+        pass
 
 
 def dispatch():
@@ -42,45 +63,33 @@ def dispatch():
 
         if signum == signal.SIGALRM:
             logging.info("Starting work")
+            run()
         else:
             logging.info("Exit requested")
             break
 
 
 
-
-def usage():
-    '''Displays usage for getopt.'''
-    print("Stock monitor daemon.")
-    print()
-    print("USAGE: ", os.path.basename(__file__));
-    print()
-
-
-
 def main():
-    try:
-        opts, args = getopt.getopt(sys.argv[1:], "ho:v", ["help", "output="])
-    except getopt.GetoptError as err:
-        # print help information and exit:
-        print(err) # will print something like "option -a not recognized"
-        usage()
-        sys.exit(2)
-    output = None
-    verbose = False
-    for o, a in opts:
-        if o == "-v":
-            verbose = True
-        elif o in ("-h", "--help"):
-            usage()
-            sys.exit()
-        elif o in ("-o", "--output"):
-            output = a
-        else:
-            assert False, "unhandled option"
+
+    parser = argparse.ArgumentParser(description='Stock monitor daemon')
+
+    parser.add_argument('mode', metavar='MODE', nargs=1, default='SCHEDULED',
+            choices=['ONCE', 'SCHEDULED', 'DOWNLOAD', 'BACKTEST', 'REPORT'],
+            help='The run mode')
+
+    opts = parser.parse_args() 
+    mode = RunMode[opts.mode[0]]
+    logging.info("Starting in mode: %s" % (mode))
 
     # Run dispatch task
-    dispatch() 
+    if mode == RunMode.SCHEDULED:
+        dispatch()
+    else:
+        run(mode)
+
+    logging.info("Clean exit.")
+    sys.exit(0)
 
 
 if __name__ == "__main__":

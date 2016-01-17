@@ -9,6 +9,7 @@ import math
 import argparse
 import sys
 import os
+import json
 from enum import Enum
 
 SECONDS_IN_DAY = 86400
@@ -40,7 +41,7 @@ def run(mode):
         # TODO: update task
         pass
     
-    if mode in (RunMode.BACKTEST):
+    if mode == RunMode.BACKTEST:
         # TODO: backtest task
         pass
 
@@ -70,16 +71,31 @@ def dispatch():
 
 
 
+def load_config(fpath):
+    '''Load the config file from a path provided, and return it as a Namespace'''
+
+    logging.info("Loading config from filename: %s" % (fpath))
+
+    fh = open(fpath, 'r')
+    config = json.loads(fh.read())
+    fh.close
+
+    return config
+
+
 def main():
 
     parser = argparse.ArgumentParser(description='Stock monitor daemon')
 
+    parser.add_argument('-c', '--config', nargs=1, default='config.json',
+            help='The JSON config file path')
     parser.add_argument('mode', metavar='MODE', nargs=1, default='SCHEDULED',
             choices=['ONCE', 'SCHEDULED', 'DOWNLOAD', 'BACKTEST', 'REPORT'],
             help='The run mode')
 
     opts = parser.parse_args() 
     mode = RunMode[opts.mode[0]]
+    conf = load_config(opts.config)
     logging.info("Starting in mode: %s" % (mode))
 
     # Run dispatch task
